@@ -1,0 +1,6 @@
+opentelemetry:
+  agent_host: localhost
+  agent_port: 6831
+app:
+  name: Golang App
+  server_address: 0.0.0.0:8080

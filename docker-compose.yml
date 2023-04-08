@@ -1,0 +1,54 @@
+
+version: "3.7"
+
+services:
+  fluent-bit:
+    image: fluent/fluent-bit
+    ports:
+      - 24224:24224/tcp
+      - 24224:24224/udp
+    volumes:
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./docker/volume:/tmp
+    networks:
+      - poc
+      
+  golang-app:
+    build: apps/golang
+    ports:
+      - 8080:8080
+    deploy:
+      resources:
+        reservations:
+          cpus: '1.5'
+          memory: '1024M'
+        limits:
+          cpus: '2'
+          memory: '2018M'
+    restart: on-failure
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-f",
+          "http://localhost:8080/healthcheck"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: fluentd
+      options:
+        tag: docker-golang
+        fluentd-address: "tcp://host.docker.internal:24224"
+        fluentd-async: "true"
+    links: 
+      - fluent-bit
+    depends_on:
+      - fluent-bit
+    networks:
+      - poc
+
+networks:
+  poc:
