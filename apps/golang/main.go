@@ -2,18 +2,18 @@ package main
 
 import (
 	"benchmark/config"
-	"benchmark/telemetry"
+	logInfra "benchmark/infrastructure/log"
+	"benchmark/infrastructure/telemetry"
 	"context"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/reactivex/rxgo/v2"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	ginlogrus "github.com/toorop/gin-logrus"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
@@ -33,23 +33,18 @@ type ReturnEvent struct {
 }
 
 var stocks = []StockUrl{
-	StockUrl{Code: "ITSA4.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=ITSA4.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	StockUrl{Code: "PETR4.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PETR4.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	StockUrl{Code: "MGLU3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=MGLU3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	StockUrl{Code: "VALE3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=VALE3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	StockUrl{Code: "PRIO3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PRIO3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-}
-
-var logger *logrus.Logger
-
-func init() {
-	logger = logrus.New()
-	logger.SetReportCaller(true)
-	logger.Formatter = &logrus.JSONFormatter{}
-	log.SetOutput(logger.Writer())
+	{Code: "ITSA4.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=ITSA4.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
+	{Code: "PETR4.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PETR4.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
+	{Code: "MGLU3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=MGLU3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
+	{Code: "VALE3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=VALE3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
+	{Code: "PRIO3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PRIO3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
 }
 
 func main() {
+
+	logInfra.Setup()
+
+	logger := log.New()
 
 	// Config telemetry
 	tp, err := telemetry.Setup()
@@ -84,6 +79,11 @@ func HealthCheck(c *gin.Context) {
 	res := map[string]any{
 		"status": "up",
 	}
+
+	log.WithFields(log.Fields{
+		"result": res,
+	}).Info("Health check")
+
 	c.JSON(http.StatusOK, res)
 }
 
@@ -97,8 +97,17 @@ func FetchStocks(c *gin.Context) {
 	observable := rxgo.Just(stocks)()
 	observable = observable.Map(func(_ context.Context, item any) (any, error) {
 		su := item.(StockUrl)
+		log.WithFields(log.Fields{
+			"symbol": su.Code,
+			"url":    su.Url,
+		}).Info("Feching stock")
 		details, err := fetchUrl(su.Url)
 		if err != nil {
+			log.WithFields(log.Fields{
+				"symbol": su.Code,
+				"url":    su.Url,
+				"error":  err,
+			}).Info("Error to fetch stock")
 			return &StockDetails{Err: err}, nil
 		}
 		return &StockDetails{Details: details}, nil
@@ -111,21 +120,39 @@ func FetchStocks(c *gin.Context) {
 		stocksDetails = append(stocksDetails, StockDetails{Details: detailItem.V, Err: detailItem.E})
 	}
 
-	c.JSON(http.StatusOK, ReturnEvent{StocksDetails: stocksDetails})
+	payload := ReturnEvent{StocksDetails: stocksDetails}
+
+	log.WithFields(log.Fields{
+		"payload": payload,
+	}).Info("Respose")
+
+	c.JSON(http.StatusOK, payload)
 }
 
 func fetchUrl(url string) (any, error) {
+	log.WithFields(log.Fields{
+		"url": url,
+	}).Info("Feching url")
+
 	client := http.Client{
 		Timeout: time.Second * 2, // Timeout after 2 seconds
 	}
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"url":   url,
+			"error": err,
+		}).Error("Error on fetching url")
 		return nil, err
 	}
 
 	res, err := client.Do(req)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"url":   url,
+			"error": err,
+		}).Error("Error on fetching url")
 		return nil, err
 	}
 
@@ -135,13 +162,24 @@ func fetchUrl(url string) (any, error) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"url":   url,
+			"error": err,
+		}).Error("Error on fetching url")
 		return nil, err
 	}
 
 	result := make(map[string]any)
 	if err := json.Unmarshal(body, &result); err != nil {
+		log.WithFields(log.Fields{
+			"url":   url,
+			"error": err,
+		}).Error("Error on fetching url")
 		return nil, err
 	}
-
+	log.WithFields(log.Fields{
+		"url":      url,
+		"response": result,
+	}).Info("Result of fetch")
 	return result, nil
 }

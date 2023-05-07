@@ -1,5 +1,5 @@
 opentelemetry:
-  agent_host: localhost
+  agent_host: jaeger
   agent_port: 6831
 app:
   name: Golang App

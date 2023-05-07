@@ -2,6 +2,13 @@
 
 Testing Fluent-bit integration on AWS.
 
+
+| Service  	| Port  	|  Url 	|   	|   	|
+|---	|---	|---	|---	|---	|
+| Jaeger |  16686	|  http://localhost:16686 	|   	|   	|   	|
+| Prometheus  	|  9090 	|   http://localhost:9090	|   	|   	|
+| Grafana 	|  3000 	| http://localhost:3000  	|   	|   	|
+
 ## Commands
 
 Testing fluent-bit-local
@@ -39,3 +46,5 @@ terraform init
 terraform apply --auto-approve
 curl http://poc-fluent-bit-1129898247.us-east-1.elb.amazonaws.com/stocks
 ```
+
+

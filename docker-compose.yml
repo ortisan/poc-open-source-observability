@@ -14,6 +14,18 @@ services:
     networks:
       - poc
 
+  flog-log:
+    image: mingrammer/flog
+    command: "-f json -t stdout -l -w -d 5s"
+    logging:
+      driver: fluentd
+      options:
+        tag: flog-log
+        fluentd-address: "tcp://host.docker.internal:24224"
+        fluentd-async: "true"
+    networks:
+      - poc
+
   alert-manager:
     image: quay.io/prometheus/alertmanager:latest
     ports:
@@ -26,38 +38,38 @@ services:
     user: 1000:1000
     ports:
       - 3000:3000
-    environment:
-      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-    entrypoint:
-      - sh
-      - -euc
-      - |
-        mkdir -p /etc/grafana/provisioning/datasources
-        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
-        apiVersion: 1
-        datasources:
-        - name: Prometheus
-          type: prometheus
-          access: proxy 
-          orgId: 1
-          url: http://prometheus:9090
-          basicAuth: false
-          isDefault: true
-          version: 1
-          editable: true
-        - name: Loki
-          type: loki
-          access: proxy 
-          orgId: 1
-          url: http://loki:3100
-          basicAuth: false
-          isDefault: true
-          version: 1
-          editable: true
-        EOF
-        /run.sh
+    # environment:
+    #   - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    #   - GF_AUTH_ANONYMOUS_ENABLED=true
+    #   - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    # entrypoint:
+    #   - sh
+    #   - -euc
+    #   - |
+    #     mkdir -p /etc/grafana/provisioning/datasources
+    #     cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+    #     apiVersion: 1
+    #     datasources:
+    #     - name: Prometheus
+    #       type: prometheus
+    #       access: proxy 
+    #       orgId: 1
+    #       url: http://prometheus:9090
+    #       basicAuth: false
+    #       isDefault: true
+    #       version: 1
+    #       editable: true
+    #     - name: Loki
+    #       type: loki
+    #       access: proxy 
+    #       orgId: 1
+    #       url: http://loki:3100
+    #       basicAuth: false
+    #       isDefault: true
+    #       version: 1
+    #       editable: true
+    #     EOF
+    #     /run.sh
     networks:
       - poc
 
@@ -65,29 +77,30 @@ services:
     image: grafana/loki:latest
     ports:
       - 3100:3100
-    volumes:
-      - ./loki.yaml:/etc/loki/local-config.yaml
+    # volumes:
+    #   - ./loki.yaml:/etc/loki/local-config.yaml
+    # command: -config.file=/etc/loki/local-config.yaml
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - poc
 
-  jaeger:
-    image: jaegertracing/all-in-one:1.6
-    ports:
-      - 5775:5775/udp
-      - 6831:6831/udp
-      - 6832:6832/udp
-      - 5778:5778
-      - 16686:16686
-      - 14268:14268
-      - 9411:9411
-    environment:
-      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
-    networks:
-      - poc
+  # jaeger:
+  #   image: jaegertracing/all-in-one:1.6
+  #   ports:
+  #     - 5775:5775/udp
+  #     - 6831:6831/udp
+  #     - 6832:6832/udp
+  #     - 5778:5778
+  #     - 16686:16686
+  #     - 14268:14268
+  #     - 9411:9411
+  #   environment:
+  #     - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+  #   networks:
+  #     - poc
 
   fluent-bit:
-    image: fluent/fluent-bit
+    image: fluent/fluent-bit:latest-debug
     ports:
       - 24224:24224/tcp
       - 24224:24224/udp
@@ -96,7 +109,6 @@ services:
       - ./docker/volume:/tmp
     networks:
       - poc
-
   golang-app:
     build: apps/golang
     ports:
