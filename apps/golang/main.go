@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/reactivex/rxgo/v2"
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 	ginlogrus "github.com/toorop/gin-logrus"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
@@ -40,11 +41,20 @@ var stocks = []StockUrl{
 	{Code: "PRIO3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PRIO3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
 }
 
+var logger *logrus.Logger
+
+func init() {
+	logger = logrus.New()
+	logger.SetReportCaller(true)
+	logger.Formatter = &logrus.JSONFormatter{}
+	log.SetOutput(logger.Writer())
+}
+
 func main() {
 
 	logInfra.Setup()
 
-	logger := log.New()
+	// logger := log.New()
 
 	// Config telemetry
 	tp, err := telemetry.Setup()
