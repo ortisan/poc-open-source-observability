@@ -9,6 +9,11 @@ Testing open source observability tools on AWS.
 | Grafana    | 3000  | http://localhost:3000  |
 
 
+## Poc
+
+1. Use fluentbit to fanout the logs and telemetry from ecs
+2. Use fluentbit into lambda runtime to fanout the logs and telemetry
+
 ## Commands
 
 Testing fluent-bit-local
