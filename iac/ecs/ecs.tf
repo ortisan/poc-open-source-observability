@@ -183,6 +183,39 @@ resource "aws_ecs_task_definition" "golang_app" {
   ])
 }
 
+resource "aws_ecs_task_definition" "prometheus" {
+  family                   = "prometheus"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 512
+  memory                   = 1024
+  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  execution_role_arn       = aws_iam_role.ecs_task_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "prometheus"
+      image     = var.prometheus_image
+      essential = true
+      portMappings = [
+        {
+          containerPort = 9000
+          hostPort      = 9000
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awsfirelens"
+      }
+      dependsOn = [
+        {
+          containerName = "fluent-bit-log-router"
+          condition     = "START"
+        }
+      ]
+    }
+  ])
+}
+
 resource "aws_security_group" "ecs_apps" {
   name        = "ecs-apps"
   description = "ECS service"

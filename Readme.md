@@ -1,13 +1,13 @@
-# POC AWS Fluent-bit
+# POC Open Source Observability Tools
 
-Testing Fluent-bit integration on AWS.
+Testing open source observability tools on AWS.
 
+| Service    | Port  | Url                    |
+|------------|-------|------------------------|
+| Jaeger     | 16686 | http://localhost:16686 |
+| Prometheus | 9090  | http://localhost:9090  |
+| Grafana    | 3000  | http://localhost:3000  |
 
-| Service  	| Port  	|  Url 	|   	|   	|
-|---	|---	|---	|---	|---	|
-| Jaeger |  16686	|  http://localhost:16686 	|   	|   	|   	|
-| Prometheus  	|  9090 	|   http://localhost:9090	|   	|   	|
-| Grafana 	|  3000 	| http://localhost:3000  	|   	|   	|
 
 ## Commands
 

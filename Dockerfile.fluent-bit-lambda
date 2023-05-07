@@ -1,0 +1,11 @@
+FROM public.ecr.aws/lambda/provided:al2
+
+CMD curl https://raw.githubusercontent.com/fluent/fluent-bit/master/install.sh | sh
+COPY commands-fluent-bit-lambda.sh /scripts/commands.sh
+RUN ["chmod", "+x", "/scripts/commands.sh"]
+RUN ["ls", "/opt"]
+
+#EXPOSE 2020
+ENTRYPOINT ["/bin/sh"]
+# ENTRYPOINT ["/bin/sh", "/scripts/commands.sh"]
+# ENTRYPOINT ["/bin/sh", "-c", "/opt/fluent-bit/bin/fluent-bit  && /lambda-entrypoint.sh"]
