@@ -14,6 +14,10 @@ Testing open source observability tools on AWS.
 1. Use fluentbit to fanout the logs and telemetry from ecs
 2. Use fluentbit into lambda runtime to fanout the logs and telemetry
 
+```sh
+docker build -t lambda-base-image -f Dockerfile.fluent-bit-lambda .
+```
+
 ## Commands
 
 Testing fluent-bit-local

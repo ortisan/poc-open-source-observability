@@ -1,0 +1,6 @@
+[fluent-bit]
+name = Fluent Bit
+baseurl = https://packages.fluentbit.io/amazonlinux/2/
+gpgcheck=1
+gpgkey=https://packages.fluentbit.io/fluentbit.key
+enabled=1
