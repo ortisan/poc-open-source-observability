@@ -42,7 +42,7 @@ aws ecr get-login-password \
         --password-stdin 779882487479.dkr.ecr.us-east-1.amazonaws.com
 
 export VERSION=latest
-docker build -t golang-app -f Dockerfile-ecs .
+docker build -t golang-app -f Dockerfile.ecs .
 docker tag golang-app:latest 779882487479.dkr.ecr.us-east-1.amazonaws.com/golang-app:$VERSION
 docker push 779882487479.dkr.ecr.us-east-1.amazonaws.com/golang-app:$VERSION
 ```

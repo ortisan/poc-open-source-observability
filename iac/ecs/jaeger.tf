@@ -92,8 +92,8 @@ resource "aws_lb_target_group" "jaeger" {
 
 resource "aws_lb_listener" "jaeger" {
   load_balancer_arn = aws_lb.poc_open_source_observability.id
-  port              = "6831"
-  protocol          = "HTTP"
+  port              = 6831
+  protocol          = "TCP_UDP"
 
   default_action {
     target_group_arn = aws_lb_target_group.jaeger.id
@@ -105,19 +105,20 @@ resource "aws_lb_listener" "jaeger" {
 resource "aws_lb_target_group" "jaeger_ui" {
   name        = "jaeger-ui-target-group"
   port        = 16686
-  protocol    = "HTTP"
+  protocol    = "TCP"
   vpc_id      = var.vpc_id
   target_type = "ip"
   health_check {
-    path = "/"
-    port = 16686
+    path     = "/"
+    port     = 16686
+    protocol = "HTTP"
   }
 }
 
 resource "aws_lb_listener" "jaeger_ui" {
   load_balancer_arn = aws_lb.poc_open_source_observability.id
-  port              = "16686"
-  protocol          = "HTTP"
+  port              = 16686
+  protocol          = "TCP"
 
   default_action {
     target_group_arn = aws_lb_target_group.jaeger_ui.id

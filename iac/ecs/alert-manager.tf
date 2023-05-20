@@ -1,7 +1,5 @@
-
-
-resource "aws_ecs_task_definition" "prometheus" {
-  family                   = "prometheus"
+resource "aws_ecs_task_definition" "alert_manager" {
+  family                   = "alert-manager"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 512
@@ -11,23 +9,24 @@ resource "aws_ecs_task_definition" "prometheus" {
 
   container_definitions = jsonencode([
     {
-      name      = "prometheus"
-      image     = var.prometheus_image
+      name      = "alert-manager"
+      image     = var.alert_manager_image
       essential = true
       portMappings = [
         {
-          containerPort = 9090
-          hostPort      = 9090
+          containerPort = 9093
+          hostPort      = 9093
+          protocol      = "tcp"
         }
       ]
     }
   ])
 }
 
-resource "aws_ecs_service" "prometheus" {
-  name            = "prometheus"
+resource "aws_ecs_service" "alert_manager" {
+  name            = "alert-manager"
   cluster         = aws_ecs_cluster.poc_open_source_observability.id
-  task_definition = aws_ecs_task_definition.prometheus.arn
+  task_definition = aws_ecs_task_definition.alert_manager.arn
   desired_count   = 1
   launch_type     = "FARGATE"
 
@@ -38,32 +37,32 @@ resource "aws_ecs_service" "prometheus" {
   }
 
   load_balancer {
-    target_group_arn = aws_lb_target_group.prometheus.arn
-    container_name   = "prometheus"
-    container_port   = 9090
+    target_group_arn = aws_lb_target_group.alert_manager.arn
+    container_name   = "alert-manager"
+    container_port   = 9093
   }
 }
 
-resource "aws_lb_target_group" "prometheus" {
-  name        = "prometheus-target-group"
-  port        = 9090
+resource "aws_lb_target_group" "alert_manager" {
+  name        = "alert-manager"
+  port        = 9093
   protocol    = "TCP"
   vpc_id      = var.vpc_id
   target_type = "ip"
   health_check {
-    path     = "/-/healthy"
-    port     = 9090
+    path     = "/"
+    port     = 9093
     protocol = "HTTP"
   }
 }
 
-resource "aws_lb_listener" "prometheus" {
+resource "aws_lb_listener" "alert_manager" {
   load_balancer_arn = aws_lb.poc_open_source_observability.id
-  port              = 9090
+  port              = 9093
   protocol          = "TCP"
 
   default_action {
-    target_group_arn = aws_lb_target_group.prometheus.id
+    target_group_arn = aws_lb_target_group.alert_manager.id
     type             = "forward"
   }
 }

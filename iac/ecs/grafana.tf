@@ -46,19 +46,20 @@ resource "aws_ecs_service" "grafana" {
 resource "aws_lb_target_group" "grafana" {
   name        = "grafana-target-group"
   port        = 3000
-  protocol    = "HTTP"
+  protocol    = "TCP"
   vpc_id      = var.vpc_id
   target_type = "ip"
   health_check {
-    path = "/api/health"
-    port = 3000
+    path     = "/api/health"
+    port     = 3000
+    protocol = "HTTP"
   }
 }
 
 resource "aws_lb_listener" "grafana" {
   load_balancer_arn = aws_lb.poc_open_source_observability.id
-  port              = "3000"
-  protocol          = "HTTP"
+  port              = 3000
+  protocol          = "TCP"
 
   default_action {
     target_group_arn = aws_lb_target_group.grafana.id

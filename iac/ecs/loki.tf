@@ -45,20 +45,21 @@ resource "aws_ecs_service" "loki" {
 resource "aws_lb_target_group" "loki" {
   name        = "loki-target-group"
   port        = 3100
-  protocol    = "HTTP"
+  protocol    = "TCP"
   vpc_id      = var.vpc_id
   target_type = "ip"
   health_check {
-    path = "/ready"
-    port = 3100
+    path     = "/ready"
+    port     = 3100
+    protocol = "HTTP"
   }
 }
 
 
 resource "aws_lb_listener" "loki" {
   load_balancer_arn = aws_lb.poc_open_source_observability.id
-  port              = "3100"
-  protocol          = "HTTP"
+  port              = 3100
+  protocol          = "TCP"
 
   default_action {
     target_group_arn = aws_lb_target_group.loki.id

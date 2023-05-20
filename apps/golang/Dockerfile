@@ -10,7 +10,7 @@ FROM golang:1.20-alpine
 WORKDIR /app
 RUN apk add ca-certificates
 COPY --from=build /app/main ./
-COPY config.yml /etc/go-app/config.yml
+COPY --from=build /app/config.yml config.yml
 
 EXPOSE 8080
 CMD [ "./main" ]

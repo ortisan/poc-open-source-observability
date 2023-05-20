@@ -130,29 +130,30 @@ resource "aws_security_group" "ecs" {
   }
 }
 
+// Only to application loadbalancer
+# resource "aws_security_group" "lb" {
+#   name   = "loadbalancer-poc-opensource-observability"
+#   vpc_id = var.vpc_id
+#   ingress {
+#     protocol    = "tcp"
+#     from_port   = 0
+#     to_port     = 65535
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
 
-resource "aws_security_group" "lb" {
-  name   = "loadbalancer-poc-opensource-observability"
-  vpc_id = var.vpc_id
-  ingress {
-    protocol    = "tcp"
-    from_port   = 0
-    to_port     = 65535
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+# }
 
 resource "aws_lb" "poc_open_source_observability" {
-  name            = "poc-opensource-observability"
-  subnets         = var.subnets
-  security_groups = [aws_security_group.lb.id]
+  name               = "poc-opensource-observability"
+  load_balancer_type = "network"
+  subnets            = var.subnets
+  # security_groups    = [aws_security_group.lb.id]
 }
 
 output "dns_name" {

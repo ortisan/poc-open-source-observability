@@ -94,19 +94,20 @@ resource "aws_ecs_service" "golang_app" {
 resource "aws_lb_target_group" "golang_app" {
   name        = "golang-target-group"
   port        = 8080
-  protocol    = "HTTP"
+  protocol    = "TCP"
   vpc_id      = var.vpc_id
   target_type = "ip"
   health_check {
-    path = "/healthcheck"
-    port = 8080
+    path     = "/healthcheck"
+    port     = 8080
+    protocol = "HTTP"
   }
 }
 
 resource "aws_lb_listener" "golang_app" {
   load_balancer_arn = aws_lb.poc_open_source_observability.id
   port              = "8080"
-  protocol          = "HTTP"
+  protocol          = "TCP"
 
   default_action {
     target_group_arn = aws_lb_target_group.golang_app.id
