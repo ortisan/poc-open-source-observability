@@ -1,0 +1,37 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  ring:
+    instance_addr: 127.0.0.1
+    kvstore:
+      store: memberlist
+  replication_factor: 1
+  path_prefix: /loki # Update this accordingly, data will be stored here.
+
+schema_config:
+  configs:
+    - from: 2020-05-15
+      store: boltdb-shipper
+      object_store: s3
+      schema: v11
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/index_cache
+    shared_store: s3
+  aws:
+    s3: s3://us-east-1/ortisan-logs-fluent-bit
+    dynamodb:
+      dynamodb_url: dynamodb://us-east-1
+
+compactor:
+  working_directory: /loki/compactor
+  shared_store: s3
+  compaction_interval: 5m

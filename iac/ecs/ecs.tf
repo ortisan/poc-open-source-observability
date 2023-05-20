@@ -50,9 +50,8 @@ resource "aws_iam_policy" "ecs_task_policy" {
               "ecr:BatchGetImage",
               "secretsmanager:DescribeSecret",
               "secretsmanager:*",
-              "s3:GetObject",
-              "s3:GetBucketLocation",
-              "s3:PutObject",
+              "s3:*",
+              "dynamodb:*",
               "logs:*"
             ],
             "Resource": "*",
@@ -159,4 +158,9 @@ resource "aws_lb" "poc_open_source_observability" {
 output "dns_name" {
   description = "The DNS name of the load balancer."
   value       = aws_lb.poc_open_source_observability.dns_name
+}
+
+output "url" {
+  description = "Url for loadbalancer"
+  value       = "http://${aws_lb.poc_open_source_observability.dns_name}"
 }

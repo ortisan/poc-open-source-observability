@@ -19,26 +19,22 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
-type StockUrl struct {
+type CriptoPairs struct {
 	Code string
 	Url  string
 }
 
-type StockDetails struct {
+type CriptoDetails struct {
 	Details any   `json:"details"`
 	Err     error `json:"error"`
 }
 
 type ReturnEvent struct {
-	StocksDetails []StockDetails `json:"stocksDetails"`
+	CriptoDetails []CriptoDetails `json:"details"`
 }
 
-var stocks = []StockUrl{
-	{Code: "ITSA4.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=ITSA4.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	{Code: "PETR4.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PETR4.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	{Code: "MGLU3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=MGLU3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	{Code: "VALE3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=VALE3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
-	{Code: "PRIO3.SA", Url: "https://query1.finance.yahoo.com/v7/finance/quote?symbols=PRIO3.SA&fields=exchangeTimezoneName,exchangeTimezoneShortName,regularMarketTime&region=US&lang=en-US"},
+var stocks = []CriptoPairs{
+	{Code: "BTCLTC", Url: "https://api.n.exchange/en/api/v1/get_price/BTCLTC"},
 }
 
 var logger *logrus.Logger
@@ -53,8 +49,6 @@ func init() {
 func main() {
 
 	logInfra.Setup()
-
-	// logger := log.New()
 
 	// Config telemetry
 	tp, err := telemetry.Setup()
@@ -81,7 +75,8 @@ func main() {
 	r.GET("/metrics", gin.WrapH(promhttp.Handler())) // Prometheus metrics
 	r.GET("/healthcheck", HealthCheck)
 	r.GET("/ping", Ping)
-	r.GET("/stocks", FetchStocks)
+	r.GET("/pairs", FetchPairs)
+	r.GET("/config", Config)
 	r.Run(config.ConfigObj.App.ServerAddress)
 }
 
@@ -103,10 +98,10 @@ func Ping(c *gin.Context) {
 	})
 }
 
-func FetchStocks(c *gin.Context) {
+func FetchPairs(c *gin.Context) {
 	observable := rxgo.Just(stocks)()
 	observable = observable.Map(func(_ context.Context, item any) (any, error) {
-		su := item.(StockUrl)
+		su := item.(CriptoPairs)
 		log.WithFields(log.Fields{
 			"symbol": su.Code,
 			"url":    su.Url,
@@ -118,19 +113,19 @@ func FetchStocks(c *gin.Context) {
 				"url":    su.Url,
 				"error":  err,
 			}).Info("Error to fetch stock")
-			return &StockDetails{Err: err}, nil
+			return &CriptoDetails{Err: err}, nil
 		}
-		return &StockDetails{Details: details}, nil
+		return &CriptoDetails{Details: details}, nil
 	},
 		rxgo.WithPool(5),
 	)
 
-	var stocksDetails []StockDetails
+	var stocksDetails []CriptoDetails
 	for detailItem := range observable.Observe() {
-		stocksDetails = append(stocksDetails, StockDetails{Details: detailItem.V, Err: detailItem.E})
+		stocksDetails = append(stocksDetails, CriptoDetails{Details: detailItem.V, Err: detailItem.E})
 	}
 
-	payload := ReturnEvent{StocksDetails: stocksDetails}
+	payload := ReturnEvent{CriptoDetails: stocksDetails}
 
 	log.WithFields(log.Fields{
 		"payload": payload,
@@ -192,4 +187,8 @@ func fetchUrl(url string) (any, error) {
 		"response": result,
 	}).Info("Result of fetch")
 	return result, nil
+}
+
+func Config(c *gin.Context) {
+	c.JSON(http.StatusOK, config.ConfigObj)
 }

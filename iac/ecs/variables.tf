@@ -27,11 +27,13 @@ variable "golang_image" {
 }
 
 variable "fluent_bit_image" {
-  default = "fluent/fluent-bit:latest"
+  # default = "fluent/fluent-bit:latest"
+  default = "779882487479.dkr.ecr.us-east-1.amazonaws.com/fluent-bit:latest"
 }
 
 variable "prometheus_image" {
-  default = "prom/prometheus:latest"
+  # default = "prom/prometheus:latest"
+  default = "779882487479.dkr.ecr.us-east-1.amazonaws.com/prometheus:latest"
 }
 
 variable "alert_manager_image" {
@@ -39,7 +41,7 @@ variable "alert_manager_image" {
 }
 
 variable "loki_image" {
-  default = "grafana/loki:latest"
+  default = "779882487479.dkr.ecr.us-east-1.amazonaws.com/loki:latest"
 }
 
 variable "jaeger_image" {

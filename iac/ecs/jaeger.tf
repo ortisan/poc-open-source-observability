@@ -37,10 +37,6 @@ resource "aws_ecs_task_definition" "jaeger" {
           hostPort      = 16686
         },
         {
-          containerPort = 16687
-          hostPort      = 16687
-        },
-        {
           containerPort = 14268
           hostPort      = 14268
         },
@@ -72,17 +68,25 @@ resource "aws_ecs_service" "jaeger" {
     container_name   = "jaeger"
     container_port   = 6831
   }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.jaeger_ui.arn
+    container_name   = "jaeger"
+    container_port   = 16686
+  }
+
 }
 
 resource "aws_lb_target_group" "jaeger" {
   name        = "jaeger-target-group"
   port        = 6831
-  protocol    = "HTTP"
+  protocol    = "TCP_UDP"
   vpc_id      = var.vpc_id
   target_type = "ip"
   health_check {
-    path = "/"
-    port = 16686
+    path     = "/"
+    port     = 16686
+    protocol = "HTTP"
   }
 }
 
@@ -93,6 +97,30 @@ resource "aws_lb_listener" "jaeger" {
 
   default_action {
     target_group_arn = aws_lb_target_group.jaeger.id
+    type             = "forward"
+  }
+}
+
+
+resource "aws_lb_target_group" "jaeger_ui" {
+  name        = "jaeger-ui-target-group"
+  port        = 16686
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+  health_check {
+    path = "/"
+    port = 16686
+  }
+}
+
+resource "aws_lb_listener" "jaeger_ui" {
+  load_balancer_arn = aws_lb.poc_open_source_observability.id
+  port              = "16686"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_lb_target_group.jaeger_ui.id
     type             = "forward"
   }
 }
